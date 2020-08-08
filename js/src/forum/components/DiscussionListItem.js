@@ -25,7 +25,9 @@ import classList from '../../common/utils/classList';
  * - `params`
  */
 export default class DiscussionListItem extends Component {
-  init() {
+  oninit(vnode) {
+    super.oninit(vnode);
+
     /**
      * Set up a subtree retainer so that the discussion will not be redrawn
      * unless new data comes in.
@@ -42,7 +44,7 @@ export default class DiscussionListItem extends Component {
     );
   }
 
-  attrs() {
+  elementAttrs() {
     return {
       className: classList([
         'DiscussionListItem',
@@ -52,7 +54,7 @@ export default class DiscussionListItem extends Component {
     };
   }
 
-  view() {
+  view(vnode) {
     const retain = this.subtree.retain();
 
     if (retain) return retain;
@@ -64,7 +66,7 @@ export default class DiscussionListItem extends Component {
     const showUnread = !this.showRepliesCount() && isUnread;
     let jumpTo = 0;
     const controls = DiscussionControls.controls(discussion, this).toArray();
-    const attrs = this.attrs();
+    const attrs = this.elementAttrs();
 
     if (this.props.params.q) {
       const post = discussion.mostRelevantPost();
@@ -130,8 +132,8 @@ export default class DiscussionListItem extends Component {
     );
   }
 
-  config(isInitialized) {
-    if (isInitialized) return;
+  oncreate(vnode) {
+    super.oncreate(vnode);
 
     // If we're on a touch device, set up the discussion row to be slidable.
     // This allows the user to drag the row to either side of the screen to
