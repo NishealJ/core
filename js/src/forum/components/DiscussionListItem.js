@@ -35,7 +35,7 @@ export default class DiscussionListItem extends Component {
      * @type {SubtreeRetainer}
      */
     this.subtree = new SubtreeRetainer(
-      () => this.props.discussion.freshness,
+      () => this.attrs.discussion.freshness,
       () => {
         const time = app.session.user && app.session.user.markedAllAsReadAt();
         return time && time.getTime();
@@ -49,17 +49,13 @@ export default class DiscussionListItem extends Component {
       className: classList([
         'DiscussionListItem',
         this.active() ? 'active' : '',
-        this.props.discussion.isHidden() ? 'DiscussionListItem--hidden' : '',
+        this.attrs.discussion.isHidden() ? 'DiscussionListItem--hidden' : '',
       ]),
     };
   }
 
   view(vnode) {
-    const retain = this.subtree.retain();
-
-    if (retain) return retain;
-
-    const discussion = this.props.discussion;
+    const discussion = this.attrs.discussion;
     const user = discussion.user();
     const isUnread = discussion.isUnread();
     const isRead = discussion.isRead();
@@ -68,13 +64,13 @@ export default class DiscussionListItem extends Component {
     const controls = DiscussionControls.controls(discussion, this).toArray();
     const attrs = this.elementAttrs();
 
-    if (this.props.params.q) {
+    if (this.attrs.params.q) {
       const post = discussion.mostRelevantPost();
       if (post) {
         jumpTo = post.number();
       }
 
-      const phrase = this.props.params.q;
+      const phrase = this.attrs.params.q;
       this.highlightRegExp = new RegExp(phrase + '|' + phrase.trim().replace(/\s+/g, '|'), 'gi');
     } else {
       jumpTo = Math.min(discussion.lastPostNumber(), (discussion.lastReadPostNumber() || 0) + 1);
@@ -83,12 +79,14 @@ export default class DiscussionListItem extends Component {
     return (
       <div {...attrs}>
         {controls.length
-          ? Dropdown.component({
-              icon: 'fas fa-ellipsis-v',
-              children: controls,
-              className: 'DiscussionListItem-controls',
-              buttonClassName: 'Button Button--icon Button--flat Slidable-underneath Slidable-underneath--right',
-            })
+          ? Dropdown.component(
+              {
+                icon: 'fas fa-ellipsis-v',
+                className: 'DiscussionListItem-controls',
+                buttonClassName: 'Button Button--icon Button--flat Slidable-underneath Slidable-underneath--right',
+              },
+              controls
+            )
           : ''}
 
         <a
@@ -145,6 +143,14 @@ export default class DiscussionListItem extends Component {
     }
   }
 
+  onbeforeupdate(vnode, old) {
+    super.onbeforeupdate(vnode, old);
+
+    if (this.subtree.retain()) {
+      return false;
+    }
+  }
+
   /**
    * Determine whether or not the discussion is currently being viewed.
    *
@@ -153,7 +159,7 @@ export default class DiscussionListItem extends Component {
   active() {
     const idParam = m.route.param('id');
 
-    return idParam && idParam.split('-')[0] === this.props.discussion.id();
+    return idParam && idParam.split('-')[0] === this.attrs.discussion.id();
   }
 
   /**
@@ -164,7 +170,7 @@ export default class DiscussionListItem extends Component {
    * @return {Boolean}
    */
   showFirstPost() {
-    return ['newest', 'oldest'].indexOf(this.props.params.sort) !== -1;
+    return ['newest', 'oldest'].indexOf(this.attrs.params.sort) !== -1;
   }
 
   /**
@@ -174,14 +180,14 @@ export default class DiscussionListItem extends Component {
    * @return {Boolean}
    */
   showRepliesCount() {
-    return this.props.params.sort === 'replies';
+    return this.attrs.params.sort === 'replies';
   }
 
   /**
    * Mark the discussion as read.
    */
   markAsRead() {
-    const discussion = this.props.discussion;
+    const discussion = this.attrs.discussion;
 
     if (discussion.isUnread()) {
       discussion.save({ lastReadPostNumber: discussion.lastPostNumber() });
@@ -198,8 +204,8 @@ export default class DiscussionListItem extends Component {
   infoItems() {
     const items = new ItemList();
 
-    if (this.props.params.q) {
-      const post = this.props.discussion.mostRelevantPost() || this.props.discussion.firstPost();
+    if (this.attrs.params.q) {
+      const post = this.attrs.discussion.mostRelevantPost() || this.attrs.discussion.firstPost();
 
       if (post && post.contentType() === 'comment') {
         const excerpt = highlight(post.contentPlain(), this.highlightRegExp, 175);
@@ -209,7 +215,7 @@ export default class DiscussionListItem extends Component {
       items.add(
         'terminalPost',
         TerminalPost.component({
-          discussion: this.props.discussion,
+          discussion: this.attrs.discussion,
           lastPost: !this.showFirstPost(),
         })
       );

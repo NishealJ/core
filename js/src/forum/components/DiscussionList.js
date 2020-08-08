@@ -27,11 +27,13 @@ export default class DiscussionList extends Component {
     if (state.isLoading()) {
       loading = LoadingIndicator.component();
     } else if (state.moreResults) {
-      loading = Button.component({
-        children: app.translator.trans('core.forum.discussion_list.load_more_button'),
-        className: 'Button',
-        onclick: state.loadMore.bind(state),
-      });
+      loading = Button.component(
+        {
+          className: 'Button',
+          onclick: state.loadMore.bind(state),
+        },
+        app.translator.trans('core.forum.discussion_list.load_more_button')
+      );
     }
 
     if (state.empty()) {
